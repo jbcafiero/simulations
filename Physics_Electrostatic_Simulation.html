@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Phyics Electrostatic Stimulation</title>
+
+<style>
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.select {
+    transition: background-color 0.05s, color 0.05s;
+}
+
+.select:hover {
+    background-color: #252525;
+    color: white;
+}
+
+</style>
+
+</head>
+<body>
+    <canvas id="simulationBoard" width="1500 " height="850"></canvas>
+    <div style="width: 1000px;">
+        <div style="float: left;">
+            <div class="select" id="interact" style="margin: 2px; padding: 2px; border: 3px solid #252525; text-align: center; border-radius: 2%;">Start</div>
+            <div class="select" id="interact2" style="margin: 2px; padding: 2px; border: 3px solid #252525; text-align: center; border-radius: 2%;">Place Electrons</div>
+            <div class="select" id="interact3" style="margin: 2px; padding: 2px; border: 3px solid #252525; text-align: center; border-radius: 2%;">Place Protons</div>
+        </div>
+        <div>
+            <div id="state" style="padding: 5px;text-align: center; font-size: 30px;">Start</div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+const toggle = document.getElementById('interact');
+const state = document.getElementById('state');
+
+const canvas = document.getElementById('simulationBoard');
+const board = canvas.getContext('2d');
+
+board.beginPath();
+board.fillStyle = "#171717";
+board.rect(0, 0, canvas.width, canvas.height);
+board.fill();
+
+console.log(canvas.width);
+
+
+class Particle {
+  constructor(m, r, x, y) {
+    this.mass = m;
+    this.radius = r;
+    this.positionX = x;
+    this.positionY = y;
+    this.velocityX = 0;
+    this.velocityY = 0;
+  }
+
+  setInitPos(x, y) {
+        this.positionX = x;
+        this.positionY = y;
+    }
+
+
+
+}
+
+class Proton extends Particle {
+  constructor(m, r, x, y) {
+    super(m, r, x, y);
+    this.charge = 30;
+  }
+
+    renderParticle() {
+        board.beginPath();
+        board.fillStyle = "#a8181a";
+        board.arc(this.positionX, this.positionY, this.radius, 0, 2 * Math.PI);
+        board.fill();
+    }
+
+    moveParticle(){
+
+        var TotalForceXDirection = 0;
+        var TotalForceYDirection = 0;
+
+        for(var i = 0; i < Particle.count; i++) {
+
+            var x = particles[i].positionX;
+            var y = particles[i].positionY;
+
+            var deltaX = (x - this.positionX);
+            var deltaY = (y - this.positionY);
+
+            if(!(Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4)) {
+                
+                var theta = Math.atan(deltaY/deltaX);
+
+                var radius = Math.sqrt(Math.pow(deltaX, 2)+Math.pow(deltaY, 2));
+
+                var q = particles[i].charge;
+
+                var FORCE = (50)*((this.charge*Math.abs(q))/(Math.pow(radius, 2)))
+
+
+                var xForce = 0;
+                var yForce = 0;
+
+                if(deltaX <= 0 && q < 0) {
+                    xForce = -FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX <= 0 && q > 0) {
+                    xForce = FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX > 0 && q < 0) {
+                    xForce = FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX > 0 && q > 0) {
+                    xForce = -FORCE*Math.abs(Math.cos(theta));
+                }
+
+                if(deltaY <= 0 && q < 0) {
+                    yForce = -FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY <= 0 && q > 0) {
+                    yForce = FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY > 0 && q < 0) {
+                    yForce = FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY > 0 && q > 0) {
+                    yForce = -FORCE*Math.abs(Math.sin(theta));
+                }
+
+                TotalForceXDirection += xForce;
+                TotalForceYDirection += yForce;
+
+            }
+
+        }
+        ////end for loop
+
+        var accelerationX = TotalForceXDirection/this.mass;
+        var accelerationY = TotalForceYDirection/this.mass;
+
+        this.velocityX = this.velocityX + accelerationX*(1/60);
+        this.velocityY = this.velocityY + accelerationY*(1/60);
+
+        this.positionX = this.positionX + this.velocityX*(1/60);
+        this.positionY = this.positionY + this.velocityY*(1/60);
+
+        board.beginPath();
+        board.fillStyle = "#a8181a";
+        board.arc(this.positionX, this.positionY, this.radius, 0, 2 * Math.PI);
+        board.fill();
+
+    }
+
+}
+
+class Electron extends Particle {
+  constructor(m, r, x, y) {
+    super(m, r, x, y);
+    this.charge = -30;
+  }
+
+    renderParticle() {
+
+        board.beginPath();
+        board.fillStyle = "#ede137";
+        board.arc(this.positionX, this.positionY, this.radius, 0, 2 * Math.PI);
+        board.fill();
+    }
+
+    moveParticle(){
+
+        var TotalForceXDirection = 0;
+        var TotalForceYDirection = 0;
+
+        for(var i = 0; i < Particle.count; i++) {
+
+            var x = particles[i].positionX;
+            var y = particles[i].positionY;
+
+            var deltaX = (x - this.positionX);
+            var deltaY = (y - this.positionY);
+
+            if(!(Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4)) {
+                
+                var theta = Math.atan(deltaY/deltaX);
+
+                var radius = Math.sqrt(Math.pow(deltaX, 2)+Math.pow(deltaY, 2));
+
+                var q = particles[i].charge;
+
+                var FORCE = (50)*((this.charge*Math.abs(q))/(Math.pow(radius, 2)))
+
+
+                var xForce = 0;
+                var yForce = 0;
+
+                if(deltaX <= 0 && q < 0) {
+                    xForce = -FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX <= 0 && q > 0) {
+                    xForce = FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX > 0 && q < 0) {
+                    xForce = FORCE*Math.abs(Math.cos(theta));
+                }
+                else if(deltaX > 0 && q > 0) {
+                    xForce = -FORCE*Math.abs(Math.cos(theta));
+                }
+
+                if(deltaY <= 0 && q < 0) {
+                    yForce = -FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY <= 0 && q > 0) {
+                    yForce = FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY > 0 && q < 0) {
+                    yForce = FORCE*Math.abs(Math.sin(theta));
+                }
+                else if(deltaY > 0 && q > 0) {
+                    yForce = -FORCE*Math.abs(Math.sin(theta));
+                }
+
+                TotalForceXDirection += xForce;
+                TotalForceYDirection += yForce;
+
+            }
+
+        }
+        ////end for loop
+        
+        var accelerationX = TotalForceXDirection/this.mass;
+        var accelerationY = TotalForceYDirection/this.mass;
+
+        this.velocityX = this.velocityX + accelerationX*(1/60);
+        this.velocityY = this.velocityY + accelerationY*(1/60);
+
+        this.positionX = this.positionX + this.velocityX*(1/60);
+        this.positionY = this.positionY + this.velocityY*(1/60);
+
+        board.beginPath();
+        board.fillStyle = "#ede137";
+        board.arc(this.positionX, this.positionY, this.radius, 0, 2 * Math.PI);
+        board.fill();
+
+        //console.log("x: " + this.positionX + "y: " + this.positionY);
+
+    }
+
+}
+
+Particle.count = 0;
+particles = [];
+
+var STATEOFSIM = 0;
+var Paused = true;
+
+var interval;
+
+toggle.addEventListener("click", function() {
+    
+    Paused = !Paused;
+
+    if(!Paused) {
+
+        toggle.innerHTML = "Pause";
+        state.innerHTML = "Running...";
+
+        interval = setInterval(function(){
+
+            board.beginPath();
+            board.fillStyle = "#171717";
+            board.rect(0, 0, canvas.width, canvas.height);
+            board.fill();
+
+            for(var i = 0; i < Particle.count; i++) {
+                particles[i].moveParticle();
+            }
+
+        }, 1000/60);
+    }
+    else {
+
+        toggle.innerHTML = "Play";
+        state.innerHTML = "Paused";
+
+        clearInterval(interval);
+    }
+
+
+    STATEOFSIM = 3;
+
+});
+
+document.getElementById('interact2').addEventListener("click", function() {
+    
+    state.innerHTML = "Placing Electrons...";
+
+    STATEOFSIM = 1;
+
+});
+
+document.getElementById('interact3').addEventListener("click", function() {
+    
+    state.innerHTML = "Placing Protons...";
+
+    STATEOFSIM = 2;
+
+});
+
+document.addEventListener("click", (event) => {
+
+    var x = event.clientX;     // Get the horizontal coordinate
+    var y = event.clientY;     // Get the vertical coordinate
+
+    if (STATEOFSIM == 1 && ((x > 0 && x <= canvas.width) && (y > 0 && y <= canvas.height))) {
+        Particle.count++
+        particles.push(new Electron(1, 2, x, y));
+        for(var i = 0; i < Particle.count; i++) {
+            particles[i].renderParticle();
+        }
+    }
+    if (STATEOFSIM == 2 && ((x > 0 && x <= canvas.width) && (y > 0 && y <= canvas.height))) {
+        Particle.count++
+        particles.push(new Proton(2, 4, x, y));
+        for(var i = 0; i < Particle.count; i++) {
+            particles[i].renderParticle();
+        }
+    }
+    if (STATEOFSIM == 3) {
+
+    }
+
+    var coor = "X coords: " + x + ", Y coords: " + y;
+
+    console.log(coor);
+
+});
+
+</script>
+
+</html>
